@@ -2,33 +2,23 @@
 #include <iostream>
 
 namespace packedvector {
-class Packedvector {
+class PackedVector {
 public:
-  Packedvector() { std::cout << "constructor" << std::endl; }
-  ~Packedvector() { std::cout << "destructor" << std::endl; }
-  Packedvector(const Packedvector &other) {
+  PackedVector() { std::cout << "constructor" << std::endl; }
+  ~PackedVector() { std::cout << "destructor" << std::endl; }
+  PackedVector(const PackedVector &other) {
     std::cout << "copy constructor" << std::endl;
   }
-  Packedvector(Packedvector &&other) {
+  PackedVector(PackedVector &&other) {
     std::cout << "move constructor" << std::endl;
   }
-  Packedvector &operator=(const Packedvector &other) {
-    std::cout << "copying assignment operator" << std::endl;
-  }
-  Packedvector &operator=(Packedvector &&other) {
-    std::cout << "moving assignment operator" << std::endl;
-  }
+  PackedVector &operator=(const PackedVector &other);
+  PackedVector &operator=(PackedVector &&other);
 
-  Packedvector &operator[](std::size_t index) {
-    std::cout << "operator[]" << std::endl;
-  }
-  const Packedvector &operator[](std::size_t index) const {
-    std::cout << "const operator[]" << std::endl;
-  }
-  Packedvector &at(std::size_t index) { std::cout << "at" << std::endl; }
-  const Packedvector &at(std::size_t index) const {
-    std::cout << "const at" << std::endl;
-  }
+  PackedVector &operator[](std::size_t index);
+  const PackedVector &operator[](std::size_t index) const;
+  PackedVector &at(std::size_t index);
+  const PackedVector &at(std::size_t index) const;
   void resize();
   void reserve();
   void shrink_to_fit();

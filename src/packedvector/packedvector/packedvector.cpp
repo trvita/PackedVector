@@ -1,24 +1,43 @@
-#pragma once
 #include <packedvector.hpp>
 
 namespace packedvector {
-void Packedvector::resize() { std::cout << "resize" << std::endl; }
-void Packedvector::reserve() { std::cout << "reserve" << std::endl; }
-void Packedvector::shrink_to_fit() {
+using PackedVector = packedvector::PackedVector;
+PackedVector &PackedVector::operator=(const PackedVector &other) {
+  std::cout << "copying assignment operator" << std::endl;
+}
+PackedVector &PackedVector::operator=(PackedVector &&other) {
+  std::cout << "moving assignment operator" << std::endl;
+}
+
+PackedVector &PackedVector::operator[](std::size_t index) {
+  std::cout << "operator[]" << std::endl;
+}
+const PackedVector &PackedVector::operator[](std::size_t index) const {
+  std::cout << "const operator[]" << std::endl;
+}
+PackedVector &PackedVector::at(std::size_t index) {
+  std::cout << "at" << std::endl;
+}
+const PackedVector &PackedVector::at(std::size_t index) const {
+  std::cout << "const at" << std::endl;
+}
+void PackedVector::resize() { std::cout << "resize" << std::endl; }
+void PackedVector::reserve() { std::cout << "reserve" << std::endl; }
+void PackedVector::shrink_to_fit() {
   std::cout << "shrink_to_fit" << std::endl;
 }
-auto Packedvector::begin() { std::cout << "begin" << std::endl; }
-auto Packedvector::end() { std::cout << "end" << std::endl; }
-auto Packedvector::rbegin() { std::cout << "rbegin" << std::endl; }
-auto Packedvector::rend() { std::cout << "rend" << std::endl; }
-bool Packedvector::empty() const { std::cout << "empty" << std::endl; }
-std::size_t Packedvector::size() const { std::cout << "size" << std::endl; }
-std::size_t Packedvector::capacity() const {
+auto PackedVector::begin() { std::cout << "begin" << std::endl; }
+auto PackedVector::end() { std::cout << "end" << std::endl; }
+auto PackedVector::rbegin() { std::cout << "rbegin" << std::endl; }
+auto PackedVector::rend() { std::cout << "rend" << std::endl; }
+bool PackedVector::empty() const { std::cout << "empty" << std::endl; }
+std::size_t PackedVector::size() const { std::cout << "size" << std::endl; }
+std::size_t PackedVector::capacity() const {
   std::cout << "capacity" << std::endl;
 }
-void Packedvector::insert() { std::cout << "insert" << std::endl; }
-void Packedvector::push_back() { std::cout << "push_back" << std::endl; }
-void Packedvector::erase() { std::cout << "erase" << std::endl; }
+void PackedVector::insert() { std::cout << "insert" << std::endl; }
+void PackedVector::push_back() { std::cout << "push_back" << std::endl; }
+void PackedVector::erase() { std::cout << "erase" << std::endl; }
 
 } // namespace packedvector
 /*
