@@ -1,0 +1,5 @@
+if(EXISTS "/home/trwita/SIBSUTIS/CPP_2024/rgr-lihobabina-is141s10/build/test/packedvector/packedvectorUnitTests[1]_tests.cmake")
+  include("/home/trwita/SIBSUTIS/CPP_2024/rgr-lihobabina-is141s10/build/test/packedvector/packedvectorUnitTests[1]_tests.cmake")
+else()
+  add_test(packedvectorUnitTests_NOT_BUILT packedvectorUnitTests_NOT_BUILT)
+endif()
