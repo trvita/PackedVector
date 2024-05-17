@@ -1,2 +1,0 @@
-/usr/bin/ar qc libpackedvector.a CMakeFiles/packedvector.dir/packedvector/packedvector.cpp.o
-/usr/bin/ranlib libpackedvector.a

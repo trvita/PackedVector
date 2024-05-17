@@ -29,19 +29,19 @@ public:
   const Packedvector &at(std::size_t index) const {
     std::cout << "const at" << std::endl;
   }
-  void resize() { std::cout << "resize" << std::endl; }
-  void reserve() { std::cout << "reserve" << std::endl; }
-  void shrink_to_fit() { std::cout << "shrink_to_fit" << std::endl; }
-  auto begin() { std::cout << "begin" << std::endl; }
-  auto end() { std::cout << "end" << std::endl; }
-  auto rbegin() { std::cout << "rbegin" << std::endl; }
-  auto rend() { std::cout << "rend" << std::endl; }
-  bool empty() const { std::cout << "empty" << std::endl; }
-  std::size_t size() const { std::cout << "size" << std::endl; }
-  std::size_t capacity() const { std::cout << "capacity" << std::endl; }
-  void insert() { std::cout << "insert" << std::endl; }
-  void push_back() { std::cout << "push_back" << std::endl; }
-  void erase() { std::cout << "erase" << std::endl; }
+  void resize();
+  void reserve();
+  void shrink_to_fit();
+  auto begin();
+  auto end();
+  auto rbegin();
+  auto rend();
+  bool empty() const;
+  std::size_t size() const;
+  std::size_t capacity() const;
+  void insert();
+  void push_back();
+  void erase();
 
 private:
 };

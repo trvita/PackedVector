@@ -6,7 +6,7 @@ target_link_libraries(
     packedvectorUnitTests
     PRIVATE
     GTest::gtest_main
-    mypackedvector
+    packedvector
 )
 
 include(GoogleTest)
