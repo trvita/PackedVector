@@ -12,14 +12,14 @@ template <typename T, std::size_t N> class PackedVector {
                 "N must be within the bit-width of T");
 
 private:
-  std::size_t size_;
-  std::size_t capacity_;
+  std::size_t size_ = 0;
+  std::size_t capacity_ = 0;
   static constexpr std::size_t bits = N;
-  std::unique_ptr<uint8_t[]> data_;
+  std::unique_ptr<uint8_t[]> data_ = std::make_unique < uint8_t[] >= 0;
 
-  T getBits(std::size_t /*index*/) const {
+  T getBits(std::size_t index) const {
     T result = 0;
-    std::uint8_t getBit(0);
+    std::uint8_t getBit = 0;
     for (std::size_t bit = index * bits; bit < bits * (index + 1); bit++) {
       getBit = (data_[bit / 8U] >> (7U - bit % 8U)) & 1U;
       result |= getBit << (bit % bits);
@@ -38,15 +38,15 @@ private:
     }
   }
 
-  void resizeCap(std::size_t /*newCapacity*/) {
-    std::size_t newByteSize(0);
+  void resizeCap(std::size_t newCapacity) {
+    std::size_t newByteSize = 0;
     newByteSize = ((newCapacity * bits) + 7) / 8;
     std::unique_ptr<uint8_t[]> newData =
         std::make_unique<uint8_t[]>(newByteSize);
     std::memset(newData.get(), 0, newByteSize);
 
     if (data_) {
-      std::size_t oldByteSize(0);
+      std::size_t oldByteSize = 0;
       oldByteSize = ((capacity_ * bits) + 7) / 8;
       std::memcpy(newData.get(), data_.get(),
                   std::min(oldByteSize, newByteSize));
@@ -59,39 +59,30 @@ private:
 public:
   //  Коснтрукторы, деструктор, специальные методы------------------------
   //  Конструктор по умолчанию
-  PackedVector()
-      : size_(0), capacity_(0), data_(std::make_unique<uint8_t[]>(0)) {
-    = default;
-  }
+  PackedVector() = default;
 
   // Конструктор по диапазону
-  template <typename It>
-  PackedVector(It begin, It end)
-      : size_(0), capacity_(0), data_(std::make_unique<uint8_t[]>(0)) {
+  template <typename It> PackedVector(It begin, It end) {
     for (auto it = begin; it != end; ++it) {
       push_back(*it);
     }
   }
   // Конструктор по списку инициализации
-  explicit PackedVector(std::initializer_list<T> list)
-      : size_(0), capacity_(0), data_(std::make_unique<uint8_t[]>(0)) {
+  explicit PackedVector(std::initializer_list<T> list) {
     for (auto it = list.begin(); it != list.end(); ++it) {
       push_back(*it);
     }
   }
 
   // Копирующий конструктор
-  PackedVector(const PackedVector &other)
-      : size_(0), capacity_(0), data_(std::make_unique<uint8_t[]>(0)) {
+  PackedVector(const PackedVector &other) {
     for (std::size_t i = 0; i < other.size(); ++i) {
       push_back(other[i]);
     }
   }
 
   // Перемещающий конструктор
-  noexcept
-  PackedVector(PackedVector &&other)
-      : size_(0), capacity_(0), data_(std::make_unique<uint8_t[]>(0)) noexcept {
+  PackedVector(PackedVector &&other) noexcept noexcept {
     data_ = std::move(other.data_);
     size_ = other.size_;
     capacity_ = other.capacity_;
@@ -136,7 +127,7 @@ public:
 
   // Методы доступа
   // T &at(std::size_t index) {// todo}
-  T at(std::size_t /*index*/) const {
+  T at(std::size_t index) const {
     if (index >= size_) {
       throw std::out_of_range("Index out of range");
     }
@@ -144,7 +135,7 @@ public:
   }
 
   // Методы изменения размера
-  void resize(std::size_t /*newSize*/) {
+  void resize(std::size_t newSize) {
     if (newSize < size_) {
       size_ = newSize;
       if (newSize < capacity_) {
@@ -157,7 +148,7 @@ public:
       }
     }
   }
-  void reserve(std::size_t /*newCapacity*/) {
+  void reserve(std::size_t newCapacity) {
     if (newCapacity > capacity_) {
       resizeCap(newCapacity);
     }
@@ -186,13 +177,12 @@ public:
     using reference = T &;
 
   private:
-    PackedVector<T, N> *container;
-    std::size_t index;
+    PackedVector<T, N> *container = nullptr;
+    std::size_t index = 0;
 
   public:
-    explicit Iterator(PackedVector<T, N> &cont = nullptr,
-                      std::size_t /*index_*/ = 0)
-        : container(&cont), index(index_) {}
+    explicit Iterator(PackedVector<T, N> &cont = nullptr, std::size_t /*index_*/
+                                                          = 0) = default;
     value_type operator*() const { return (*container)[index]; }
 
     pointer operator->() const { return &((*container)[index]); }
@@ -259,13 +249,12 @@ public:
     using reference = T &;
 
   private:
-    PackedVector<T, N> *container;
-    std::size_t index;
+    PackedVector<T, N> *container = nullptr;
+    std::size_t index = 0;
 
   public:
     explicit ReverseIterator(PackedVector<T, N> &cont = nullptr,
-                             std::size_t /*index_*/)
-        : container(&cont), index(index_) {}
+                             std::size_t /*index_*/ = 0) = default;
     value_type operator*() const { return (*container)[index]; }
 
     pointer operator->() const { return &((*container)[index]); }
@@ -311,9 +300,7 @@ public:
 
   std::size_t capacity() const noexcept { return capacity_; }
 
-  void insert(std::size_t /*index*/
-              ,
-              const T &value) {
+  void insert(std::size_t index, const T &value) {
     if (index > size_) {
       throw std::out_of_range("Index out of range");
     }
@@ -325,7 +312,7 @@ public:
   }
 
   Iterator insert(Iterator /*pos*/, const T &value) {
-    std::size_t index(0);
+    std::size_t index = 0;
     index = std::distance(begin(), pos);
     resize(size_ + 1);
     for (std::size_t i = size_ - 1; i > index; --i) {
@@ -360,7 +347,7 @@ public:
     if (pos == end()) {
       throw std::out_of_range("Invalid iterator");
     }
-    std::size_t index(0);
+    std::size_t index = 0;
     index = std::distance(begin(), pos);
     for (std::size_t i = index; i < size_ - 1; ++i) {
       setBits(i, getBits(i + 1));
