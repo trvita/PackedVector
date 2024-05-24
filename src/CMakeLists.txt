@@ -1,1 +1,2 @@
 add_subdirectory(packedvector)
+add_subdirectory(app)
