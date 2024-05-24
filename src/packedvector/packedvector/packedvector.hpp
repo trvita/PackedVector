@@ -6,6 +6,7 @@
 
 namespace packedvector {
 // N - количество бит на элемент
+
 template <typename T, size_t N> class PackedVector {
   static_assert(N > 0 && N <= (sizeof(T) * 8),
                 "N must be within the bit-width of T");
@@ -169,23 +170,48 @@ public:
     return *this;
   }
 
-  // Оператор доступа по индексу
-  // T &operator[](size_t index);
+  // Операторы доступа по индексу
+  // T &operator[](size_t index) { // todo}
   T operator[](size_t index) const { return getBits(index); }
 
   // Методы доступа
-  T &at(size_t index); // бросает исключение!
-  T at(size_t index) const;
+  // T &at(size_t index) {// todo}
+  T at(size_t index) const {
+    if (index >= size_) {
+      throw std::out_of_range("Index out of range");
+    }
+    return getBits(index);
+  }
 
   // Методы изменения размера
-  void resize(size_t newSize);
-  void reserve(size_t newCapacity);
-  void shrink_to_fit();
+  void resize(size_t newSize) {
+    if (newSize < size_) {
+      size_ = newSize;
+      if (newSize < capacity_) {
+        shrink_to_fit();
+      }
+    } else if (newSize > size_) {
+      reserve(newSize);
+      while (size_ < newSize) {
+        push_back(T());
+      }
+    }
+  }
+  void reserve(size_t newCapacity) {
+    if (newCapacity > capacity_) {
+      resizeCap(newCapacity);
+    }
+  }
+  void shrink_to_fit() {
+    if (capacity_ > size_) {
+      resizeCap(size_);
+    }
+  }
 
   void clear() {
     size_ = 0;
     if (data_) {
-      std::memset(data_.get(), 0, ((capacity_ * bits_per_element) + 7) / 8);
+      std::memset(data_.get(), 0, ((capacity_ * bits) + 7) / 8);
     }
   }
 

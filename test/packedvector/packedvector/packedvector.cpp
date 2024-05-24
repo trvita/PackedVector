@@ -9,7 +9,6 @@ TEST(PackedVectorTest, Size) {
   pv.push_back(1023);
   pv.push_back(512);
   pv.push_back(256);
-
   ASSERT_EQ(pv.size(), 3);
 
   pv.clear();
@@ -21,16 +20,17 @@ TEST(PackedVectorTest, Size) {
 
 TEST(PackedVectorTest, Capacity) {
   PackedVector<uint32_t, 5> pv;
-
   EXPECT_EQ(pv.capacity(), 0);
-
+  
   pv.push_back(1);
   EXPECT_EQ(pv.capacity(), 1);
-
+  
   pv.push_back(2);
   EXPECT_EQ(pv.capacity(), 2);
+  
   pv.push_back(3);
   EXPECT_EQ(pv.capacity(), 4);
+  
   pv.push_back(4);
   pv.push_back(5);
   EXPECT_EQ(pv.capacity(), 8);
@@ -77,6 +77,72 @@ TEST(PackedVectorTest, MoveAssignment) {
 
   ASSERT_EQ(pv1.size(), 0);
   ASSERT_EQ(pv1.capacity(), 0);
+}
+
+TEST(PackedVectorTest, ConstAt) {
+  PackedVector<uint32_t, 10> pv{1023, 512, 256};
+  EXPECT_EQ(pv.at(0), 1023);
+  EXPECT_EQ(pv.at(1), 512);
+  EXPECT_EQ(pv.at(2), 256);
+
+  EXPECT_THROW(pv.at(3), std::out_of_range);
+  EXPECT_THROW(pv.at(100), std::out_of_range);
+}
+
+TEST(PackedVectorTest, Resize) {
+  PackedVector<uint32_t, 10> pv = {1, 2, 3, 4, 5};
+
+  pv.resize(3);
+  ASSERT_EQ(pv.size(), 3);
+  EXPECT_EQ(pv[0], 1);
+  EXPECT_EQ(pv[1], 2);
+  EXPECT_EQ(pv[2], 3);
+
+  pv.resize(5);
+  ASSERT_EQ(pv.size(), 5);
+  EXPECT_EQ(pv[0], 1);
+  EXPECT_EQ(pv[1], 2);
+  EXPECT_EQ(pv[2], 3);
+  EXPECT_EQ(pv[3], 0); 
+  EXPECT_EQ(pv[4], 0);
+
+  pv.resize(7);
+  ASSERT_EQ(pv.size(), 7);
+  EXPECT_EQ(pv[0], 1);
+  EXPECT_EQ(pv[1], 2);
+  EXPECT_EQ(pv[2], 3);
+  EXPECT_EQ(pv[3], 0);
+  EXPECT_EQ(pv[4], 0);
+  EXPECT_EQ(pv[5], 0); 
+  EXPECT_EQ(pv[6], 0);
+}
+
+TEST(PackedVectorTest, Reserve) {
+  PackedVector<uint32_t, 10> pv = {1, 2, 3, 4, 5};
+
+  pv.reserve(10);
+  ASSERT_EQ(pv.capacity(), 10);
+
+  pv.reserve(20);
+  ASSERT_EQ(pv.capacity(), 20);
+
+  pv.reserve(5);
+  ASSERT_EQ(pv.capacity(), 20); 
+}
+
+TEST(PackedVectorTest, ShrinkToFit) {
+  PackedVector<uint32_t, 10> pv = {1, 2, 3, 4, 5};
+
+  pv.reserve(20);
+  ASSERT_EQ(pv.capacity(), 20);
+
+  pv.resize(3);
+  pv.shrink_to_fit();
+  ASSERT_EQ(pv.capacity(), 3);
+
+  pv.reserve(10);
+  pv.shrink_to_fit();
+  ASSERT_EQ(pv.capacity(), 3); 
 }
 
 int main(int argc, char **argv) {
