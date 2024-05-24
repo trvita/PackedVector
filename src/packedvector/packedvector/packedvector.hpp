@@ -15,7 +15,7 @@ private:
   std::size_t size_ = 0;
   std::size_t capacity_ = 0;
   static constexpr std::size_t bits = N;
-  std::unique_ptr<uint8_t[]> data_ = std::make_unique < uint8_t[] >= 0;
+  std::unique_ptr<uint8_t[]> data_ = std::make_unique<uint8_t[]>(0);
 
   T getBits(std::size_t index) const {
     T result = 0;
@@ -82,7 +82,7 @@ public:
   }
 
   // Перемещающий конструктор
-  PackedVector(PackedVector &&other) noexcept noexcept {
+  PackedVector(PackedVector &&other) noexcept {
     data_ = std::move(other.data_);
     size_ = other.size_;
     capacity_ = other.capacity_;
@@ -181,8 +181,9 @@ public:
     std::size_t index = 0;
 
   public:
-    explicit Iterator(PackedVector<T, N> &cont = nullptr, std::size_t /*index_*/
-                                                          = 0) = default;
+    explicit Iterator(PackedVector<T, N> &cont = nullptr,
+                      std::size_t index_ = 0)
+        : container(&cont), index(index_) {}
     value_type operator*() const { return (*container)[index]; }
 
     pointer operator->() const { return &((*container)[index]); }
@@ -208,23 +209,23 @@ public:
       --(*this);
       return temp;
     }
-    Iterator &operator+=(difference_type /*n*/) {
+    Iterator &operator+=(difference_type n) {
       index += n;
       return *this;
     }
 
-    Iterator operator+(difference_type /*n*/) const {
+    Iterator operator+(difference_type n) const {
       Iterator temp = *this;
       temp += n;
       return temp;
     }
 
-    Iterator &operator-=(difference_type /*n*/) {
+    Iterator &operator-=(difference_type n) {
       index -= n;
       return *this;
     }
 
-    Iterator operator-(difference_type /*n*/) const {
+    Iterator operator-(difference_type n) const {
       Iterator temp = *this;
       temp -= n;
       return temp;
@@ -254,7 +255,8 @@ public:
 
   public:
     explicit ReverseIterator(PackedVector<T, N> &cont = nullptr,
-                             std::size_t /*index_*/ = 0) = default;
+                             std::size_t index_ = 0)
+        : container(&cont), index(index_) {}
     value_type operator*() const { return (*container)[index]; }
 
     pointer operator->() const { return &((*container)[index]); }
@@ -311,7 +313,7 @@ public:
     setBits(index, value);
   }
 
-  Iterator insert(Iterator /*pos*/, const T &value) {
+  Iterator insert(Iterator pos, const T &value) {
     std::size_t index = 0;
     index = std::distance(begin(), pos);
     resize(size_ + 1);
@@ -331,19 +333,19 @@ public:
     ++size_;
   }
 
-  void erase(std::size_t /*position*/) {
-    if (position >= size_) {
+  void erase(std::size_t pos) {
+    if (pos >= size_) {
       throw std::out_of_range("Index out of range");
     }
 
-    for (std::size_t i = position; i < size_ - 1; ++i) {
+    for (std::size_t i = pos; i < size_ - 1; ++i) {
       setBits(i, getBits(i + 1));
     }
 
     resize(size_ - 1);
   }
 
-  Iterator erase(Iterator /*pos*/) {
+  Iterator erase(Iterator pos) {
     if (pos == end()) {
       throw std::out_of_range("Invalid iterator");
     }
