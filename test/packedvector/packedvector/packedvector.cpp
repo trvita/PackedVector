@@ -1,6 +1,46 @@
+#include <cstdlib>
 #include <gtest/gtest.h>
+#include <iostream>
+#include <malloc.h>
 #include <packedvector.hpp>
+#include <vector>
 using namespace packedvector;
+
+template <typename T> size_t memVector(const std::vector<T> &vec) {
+  return sizeof(vec) + vec.capacity() * sizeof(T);
+}
+
+template <typename T, size_t N>
+size_t memPackedVector(const PackedVector<T, N> &packedVec) {
+  return sizeof(packedVec) + malloc_usable_size(packedVec.getData().get());
+}
+
+TEST(PackedVectorTest, StdVectorComparison) {
+  const size_t numElements = 1000;
+  PackedVector<uint32_t, 10>
+      packedVec; // потому что в 10 бит помещаются значения до 1024
+  std::vector<uint32_t> Vec;
+  for (size_t i = 0; i < numElements; ++i) {
+    Vec.push_back(i);
+    packedVec.push_back(i);
+  }
+  for (size_t i = 0; i < numElements; ++i) {
+    EXPECT_EQ(packedVec[i], Vec[i]);
+  }
+  EXPECT_LT(memPackedVector(packedVec), memVector(Vec));
+}
+
+TEST(PackedVectorTest, Correctness) {
+  const size_t numElements = 1000;
+  PackedVector<uint32_t, 10> packedVec;
+
+  for (size_t i = 0; i < numElements; ++i) {
+    packedVec.push_back(i);
+  }
+  for (size_t i = 0; i < numElements; ++i) {
+    EXPECT_EQ(packedVec[i], i);
+  }
+}
 
 TEST(PackedVectorTest, Size) {
   PackedVector<uint32_t, 10> pv;
@@ -21,16 +61,16 @@ TEST(PackedVectorTest, Size) {
 TEST(PackedVectorTest, Capacity) {
   PackedVector<uint32_t, 5> pv;
   EXPECT_EQ(pv.capacity(), 0);
-  
+
   pv.push_back(1);
   EXPECT_EQ(pv.capacity(), 1);
-  
+
   pv.push_back(2);
   EXPECT_EQ(pv.capacity(), 2);
-  
+
   pv.push_back(3);
   EXPECT_EQ(pv.capacity(), 4);
-  
+
   pv.push_back(4);
   pv.push_back(5);
   EXPECT_EQ(pv.capacity(), 8);
@@ -90,7 +130,7 @@ TEST(PackedVectorTest, ConstAt) {
 }
 
 TEST(PackedVectorTest, Resize) {
-  PackedVector<uint32_t, 10> pv = {1, 2, 3, 4, 5};
+  PackedVector<uint32_t, 10> pv{1, 2, 3, 4, 5};
 
   pv.resize(3);
   ASSERT_EQ(pv.size(), 3);
@@ -103,7 +143,7 @@ TEST(PackedVectorTest, Resize) {
   EXPECT_EQ(pv[0], 1);
   EXPECT_EQ(pv[1], 2);
   EXPECT_EQ(pv[2], 3);
-  EXPECT_EQ(pv[3], 0); 
+  EXPECT_EQ(pv[3], 0);
   EXPECT_EQ(pv[4], 0);
 
   pv.resize(7);
@@ -113,12 +153,12 @@ TEST(PackedVectorTest, Resize) {
   EXPECT_EQ(pv[2], 3);
   EXPECT_EQ(pv[3], 0);
   EXPECT_EQ(pv[4], 0);
-  EXPECT_EQ(pv[5], 0); 
+  EXPECT_EQ(pv[5], 0);
   EXPECT_EQ(pv[6], 0);
 }
 
 TEST(PackedVectorTest, Reserve) {
-  PackedVector<uint32_t, 10> pv = {1, 2, 3, 4, 5};
+  PackedVector<uint32_t, 10> pv{1, 2, 3, 4, 5};
 
   pv.reserve(10);
   ASSERT_EQ(pv.capacity(), 10);
@@ -127,11 +167,11 @@ TEST(PackedVectorTest, Reserve) {
   ASSERT_EQ(pv.capacity(), 20);
 
   pv.reserve(5);
-  ASSERT_EQ(pv.capacity(), 20); 
+  ASSERT_EQ(pv.capacity(), 20);
 }
 
 TEST(PackedVectorTest, ShrinkToFit) {
-  PackedVector<uint32_t, 10> pv = {1, 2, 3, 4, 5};
+  PackedVector<uint32_t, 10> pv{1, 2, 3, 4, 5};
 
   pv.reserve(20);
   ASSERT_EQ(pv.capacity(), 20);
@@ -142,8 +182,81 @@ TEST(PackedVectorTest, ShrinkToFit) {
 
   pv.reserve(10);
   pv.shrink_to_fit();
-  ASSERT_EQ(pv.capacity(), 3); 
+  ASSERT_EQ(pv.capacity(), 3);
 }
+
+TEST(PackedVectorTest, Insert) {
+  PackedVector<int, 4> pv;
+  pv.push_back(1);
+  pv.push_back(2);
+  pv.push_back(3);
+
+  pv.insert(1, 4);
+
+  EXPECT_EQ(pv.size(), 4);
+  EXPECT_EQ(pv[0], 1);
+  EXPECT_EQ(pv[1], 4);
+  EXPECT_EQ(pv[2], 2);
+  EXPECT_EQ(pv[3], 3);
+}
+
+TEST(PackedVectorTest, EraseTest) {
+  PackedVector<int, 4> pv;
+  pv.push_back(1);
+  pv.push_back(2);
+  pv.push_back(3);
+
+  pv.erase(1); 
+
+  EXPECT_EQ(pv.size(), 2);
+  EXPECT_EQ(pv[0], 1);
+  EXPECT_EQ(pv[1], 3);
+}
+
+TEST(PackedVectorIteratorTest, Iterator) {
+  PackedVector<uint32_t, 10> pv{1, 2, 3, 4, 5};
+
+  auto it = pv.begin();
+  auto end = pv.end();
+
+  int expected = 1;
+  while (it != end) {
+    EXPECT_EQ(*it, expected);
+    ++it;
+    ++expected;
+  }
+}
+TEST(PackedVectorIteratorTest, ReverseIterator) {
+  PackedVector<uint32_t, 10> pv{1, 2, 3, 4, 5};
+
+  auto rit = pv.rbegin();
+  auto rend = pv.rend();
+
+  int expected = 5;
+  while (rit != rend) {
+    EXPECT_EQ(*rit, expected);
+    ++rit;
+    --expected;
+  }
+}
+
+// TEST(PackedVectorIteratorTest, ReverseIteratorBeginEnd) {
+//   PackedVector<int, 4> vec{1, 2, 3, 4, 5};
+//   PackedVector<int, 4>::ReverseIterator rit_begin = vec.rbegin();
+//   PackedVector<int, 4>::ReverseIterator rit_end = vec.rend();
+
+//   EXPECT_EQ(*rit_begin, 5);
+//   EXPECT_EQ(*(--rit_end), 1);
+// }
+
+// TEST(PackedVectorIteratorTest, ConstReverseIteratorBeginEnd) {
+//   const PackedVector<int, 4> vec{1, 2, 3, 4, 5};
+//   PackedVector<int, 4>::ConstReverseIterator crit_begin = vec.crbegin();
+//   PackedVector<int, 4>::ConstReverseIterator crit_end = vec.crend();
+
+//   EXPECT_EQ(*crit_begin, 5);
+//   EXPECT_EQ(*(--crit_end), 1);
+// }
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

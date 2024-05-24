@@ -11,80 +11,31 @@ template <typename T, size_t N> class PackedVector {
   static_assert(N > 0 && N <= (sizeof(T) * 8),
                 "N must be within the bit-width of T");
 
-private:
+public:
   size_t size_;
   size_t capacity_;
   static constexpr size_t bits = N;
   std::unique_ptr<uint8_t[]> data_;
 
-  void setBits(size_t index, T value) {
-    size_t bitPos = index * bits;
-    size_t byteIndex = bitPos / 8;
-    size_t bitOffset = bitPos % 8;
-
-    T mask = (static_cast<T>(1) << bits) - 1;
-    value &= mask;
-
-    size_t bitsInFirstByte = 8 - bitOffset;
-
-    if (bits <= bitsInFirstByte) {
-      uint8_t clearMask = ~(mask << bitOffset);
-      data_[byteIndex] = (data_[byteIndex] & clearMask) | (value << bitOffset);
-    } else {
-      data_[byteIndex] &= ~(mask << bitOffset);
-      data_[byteIndex] |= value << bitOffset;
-
-      size_t bitsRemaining = bits - bitsInFirstByte;
-      value >>= bitsInFirstByte;
-      ++byteIndex;
-
-      while (bitsRemaining >= 8) {
-        data_[byteIndex] = static_cast<uint8_t>(value);
-        value >>= 8;
-        bitsRemaining -= 8;
-        ++byteIndex;
-      }
-
-      if (bitsRemaining > 0) {
-        uint8_t clearMask = ~(static_cast<uint8_t>((1 << bitsRemaining) - 1));
-        data_[byteIndex] &= clearMask;
-        data_[byteIndex] |= static_cast<uint8_t>(value);
-      }
+  T getBits(size_t index) const {
+    T result = 0;
+    std::uint8_t getBit = 0;
+    for (std::size_t bit = index * bits; bit < bits * (index + 1); bit++) {
+      getBit = (data_[bit / 8U] >> (7U - bit % 8U)) & 1U;
+      result |= getBit << (bit % bits);
     }
+    return result;
   }
 
-  T getBits(size_t index) const {
-    size_t bitPos = index * bits;
-    size_t byteIndex = bitPos / 8;
-    size_t bitOffset = bitPos % 8;
-
-    size_t bitsInFirstByte = 8 - bitOffset;
-
-    T result = 0;
-
-    if (bits <= bitsInFirstByte) {
-      result = (data_[byteIndex] >> bitOffset) & ((1 << bits) - 1);
-    } else {
-      result = (data_[byteIndex] >> bitOffset);
-      size_t bitsRemaining = bits - bitsInFirstByte;
-      size_t shiftAmount = bitsInFirstByte;
-      ++byteIndex;
-
-      while (bitsRemaining >= 8) {
-        result |= static_cast<T>(data_[byteIndex]) << shiftAmount;
-        shiftAmount += 8;
-        bitsRemaining -= 8;
-        ++byteIndex;
-      }
-
-      if (bitsRemaining > 0) {
-        result |=
-            (static_cast<T>(data_[byteIndex]) & ((1 << bitsRemaining) - 1))
-            << shiftAmount;
+  void setBits(size_t index, T value) {
+    for (std::size_t bit = index * bits; bit < bits * (index + 1); bit++) {
+      std::uint8_t setBit = (value >> (bit % bits)) & 0x1;
+      if (setBit != 0) {
+        data_[bit / 8U] |= (1U << (7U - bit % 8U));
+      } else {
+        data_[bit / 8U] &= ~(1U << (7U - bit % 8U));
       }
     }
-
-    return result;
   }
 
   void resizeCap(size_t newCapacity) {
@@ -103,10 +54,9 @@ private:
     capacity_ = newCapacity;
   }
 
-public:
-  // Коснтрукторы, деструктор, специальные методы------------------------
-
-  // Конструктор по умолчанию
+  // public:
+  //  Коснтрукторы, деструктор, специальные методы------------------------
+  //  Конструктор по умолчанию
   PackedVector() : size_(0), capacity_(0) {}
 
   // Конструктор по диапазону
@@ -217,237 +167,154 @@ public:
 
   // Итераторы------------------------------------------------------------
   // Неконстантный итератор
-  // class Iterator {
-  // private:
-  //   Node *current_;
+  class Iterator {
+  public:
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
+    using pointer = T *;
+    using reference = T &;
 
-  // public:
-  //   using difference_type = std::ptrdiff_t;
-  //   using value_type = T;
-  //   using pointer = T *;
-  //   using reference = T &;
-  //   using iterator_category = std::random_access_iterator_tag;
+  private:
+    PackedVector<T, N> *container;
+    size_t index;
 
-  //   Iterator(Node *current) : current_(current) {}
+  public:
+    explicit Iterator(PackedVector<T, N> &cont, size_t idx)
+        : container(&cont), index(idx) {}
+    value_type operator*() const { return (*container)[index]; }
 
-  //   reference operator*() const { return current_->data_; }
-  //   pointer operator->() const { return &current_->data_; }
+    pointer operator->() const { return &((*container)[index]); }
 
-  //   Iterator &operator++() {
-  //     if (current_ != nullptr) {
-  //       current_ = current_->next;
-  //     }
-  //     return *this;
-  //   }
+    Iterator &operator++() {
+      ++index;
+      return *this;
+    }
 
-  //   Iterator operator++(int) {
-  //     Iterator temp = *this;
-  //     ++(*this);
-  //     return temp;
-  //   }
+    Iterator operator++(int) {
+      Iterator temp = *this;
+      ++(*this);
+      return temp;
+    }
 
-  //   Iterator &operator--() {
-  //     if (current_ != nullptr) {
-  //       current_ = current_->prev;
-  //     }
-  //     return *this;
-  //   }
+    Iterator &operator--() {
+      --index;
+      return *this;
+    }
 
-  //   Iterator operator--(int) {
-  //     Iterator temp = *this;
-  //     --(*this);
-  //     return temp;
-  //   }
+    Iterator operator--(int) {
+      Iterator temp = *this;
+      --(*this);
+      return temp;
+    }
+    Iterator &operator+=(difference_type n) {
+      index += n;
+      return *this;
+    }
 
-  //   bool operator==(const Iterator &other) const {
-  //     return current_ == other.current_;
-  //   }
-  //   bool operator!=(const Iterator &other) const {
-  //     return current_ != other.current_;
-  //   }
-  // };
+    Iterator operator+(difference_type n) const {
+      Iterator temp = *this;
+      temp += n;
+      return temp;
+    }
 
-  // // Константный итератор
-  // class ConstIterator {
-  // private:
-  //   const Node *current_;
+    Iterator &operator-=(difference_type n) {
+      index -= n;
+      return *this;
+    }
 
-  // public:
-  //   using difference_type = std::ptrdiff_t;
-  //   using value_type = T;
-  //   using pointer = const T *;
-  //   using reference = const T &;
-  //   using iterator_category = std::random_access_iterator_tag;
+    Iterator operator-(difference_type n) const {
+      Iterator temp = *this;
+      temp -= n;
+      return temp;
+    }
 
-  //   ConstIterator(const Node *current) : current_(current) {}
+    bool operator==(const Iterator &other) const {
+      return index == other.index;
+    }
 
-  //   reference operator*() const { return current_->data_; }
-  //   pointer operator->() const { return &current_->data_; }
+    bool operator!=(const Iterator &other) const {
+      return index != other.index;
+    }
+  };
 
-  //   ConstIterator &operator++() {
-  //     if (current_ != nullptr) {
-  //       current_ = current_->next;
-  //     }
-  //     return *this;
-  //   }
+  // Неконстантный обратный итератор
+  class ReverseIterator {
+  public:
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
+    using pointer = T *;
+    using reference = T &;
 
-  //   ConstIterator operator++(int) {
-  //     ConstIterator temp = *this;
-  //     ++(*this);
-  //     return temp;
-  //   }
+  private:
+    PackedVector<T, N> *container;
+    size_t index;
 
-  //   ConstIterator &operator--() {
-  //     if (current_ != nullptr) {
-  //       current_ = current_->prev;
-  //     }
-  //     return *this;
-  //   }
+  public:
+    explicit ReverseIterator(PackedVector<T, N> &cont, size_t idx)
+        : container(&cont), index(idx) {}
+    value_type operator*() const { return (*container)[index]; }
 
-  //   ConstIterator operator--(int) {
-  //     ConstIterator temp = *this;
-  //     --(*this);
-  //     return temp;
-  //   }
+    pointer operator->() const { return &((*container)[index]); }
 
-  //   bool operator==(const ConstIterator &other) const {
-  //     return current_ == other.current_;
-  //   }
-  //   bool operator!=(const ConstIterator &other) const {
-  //     return current_ != other.current_;
-  //   }
-  // };
-  // // Неконстантный обратный итератор
-  // class ReverseIterator {
-  // private:
-  //   Node *current_;
+    ReverseIterator &operator++() {
+      --index;
+      return *this;
+    }
 
-  // public:
-  //   using difference_type = std::ptrdiff_t;
-  //   using value_type = T;
-  //   using pointer = T *;
-  //   using reference = T &;
-  //   using iterator_category = std::random_access_iterator_tag;
+    ReverseIterator operator++(int) {
+      ReverseIterator temp = *this;
+      --(*this);
+      return temp;
+    }
 
-  //   ReverseIterator(Node *current) : current_(current) {}
+    bool operator==(const ReverseIterator &other) const {
+      return index == other.index;
+    }
 
-  //   reference operator*() const { return current_->data_; }
-  //   pointer operator->() const { return &current_->data_; }
+    bool operator!=(const ReverseIterator &other) const {
+      return index != other.index;
+    }
+    ReverseIterator operator+(difference_type n) const {
+      return ReverseIterator(*container, index - n);
+    }
 
-  //   ReverseIterator &operator++() {
-  //     if (current_ != nullptr) {
-  //       current_ = current_->prev;
-  //     }
-  //     return *this;
-  //   }
+    ReverseIterator operator-(difference_type n) const {
+      return ReverseIterator(*container, index + n);
+    }
+  };
 
-  //   ReverseIterator operator++(int) {
-
-  //     ReverseIterator temp = *this;
-  //     --(*this);
-  //     return temp;
-  //   }
-
-  //   ReverseIterator &operator--() {
-
-  //     if (current_ != nullptr) {
-  //       current_ = current_->next;
-  //     }
-  //     return *this;
-  //   }
-
-  //   ReverseIterator operator--(int) {
-
-  //     ReverseIterator temp = *this;
-  //     ++(*this);
-  //     return temp;
-  //   }
-
-  //   bool operator==(const ReverseIterator &other) const {
-  //     return current_ == other.current_;
-  //   }
-  //   bool operator!=(const ReverseIterator &other) const {
-  //     return current_ != other.current_;
-  //   }
-  // };
-
-  // // Константный обратный итератор
-  // class ConstReverseIterator {
-  // private:
-  //   const Node *current_;
-
-  // public:
-  //   using difference_type = std::ptrdiff_t;
-  //   using value_type = T;
-  //   using pointer = const T *;
-  //   using reference = const T &;
-  //   using iterator_category = std::random_access_iterator_tag;
-
-  //   ConstReverseIterator(const Node *current) : current_(current) {}
-
-  //   reference operator*() const { return current_->data_; }
-  //   pointer operator->() const { return &current_->data_; }
-
-  //   ConstReverseIterator &operator++() {
-  //     if (current_ != nullptr) {
-  //       current_ = current_->prev;
-  //     }
-  //     return *this;
-  //   }
-
-  //   ConstReverseIterator operator++(int) {
-  //     ConstReverseIterator temp = *this;
-  //     --(*this);
-  //     return temp;
-  //   }
-
-  //   ConstReverseIterator &operator--() {
-  //     if (current_ != nullptr) {
-  //       current_ = current_->next;
-  //     }
-  //     return *this;
-  //   }
-
-  //   ConstReverseIterator operator--(int) {
-  //     ConstReverseIterator temp = *this;
-  //     ++(*this);
-  //     return temp;
-  //   }
-
-  //   bool operator==(const ConstReverseIterator &other) const {
-  //     return current_ == other.current_;
-  //   }
-  //   bool operator!=(const ConstReverseIterator &other) const {
-  //     return current_ != other.current_;
-  //   }
-  // };
-
-  // // Методы для работы с итераторами
-  // Iterator begin();
-  // Iterator end();
-  // ConstIterator begin() const;
-  // ConstIterator end() const;
-
-  // ConstIterator cbegin() const;
-  // ConstIterator cend() const;
-
-  // ReverseIterator rbegin();
-  // ReverseIterator rend();
-  // ReverseConstIterator rbegin() const;
-  // ReverseConstIterator rend() const;
-  // ReverseConstIterator crbegin() const;
-  // ReverseConstIterator crend() const;
+  // Методы для работы с итераторами
 
   // Iterator erase(Iterator pos);
   // Iterator erase(ConstIterator pos);
   // Iterator erase(Iterator first, Iterator last);
   // Iterator erase(ConstIterator first, ConstIterator last);
 
+  Iterator begin() { return Iterator(*this, 0); }
+  Iterator end() { return Iterator(*this, size_); }
+  ReverseIterator rbegin() { return ReverseIterator(*this, size_ - 1); }
+  ReverseIterator rend() { return ReverseIterator(*this, -1); }
+
   // Дополнительные методы
-  bool empty() const;
+  bool empty() const { return size_ == 0; }
+
   size_t size() const noexcept { return size_; }
+
   size_t capacity() const noexcept { return capacity_; }
-  // void insert(Iterator pos, const T &value);
+
+  void insert(size_t index, const T &value) {
+    if (index > size_) {
+      throw std::out_of_range("Index out of range");
+    }
+    resize(size_ + 1);
+    for (size_t i = size_ - 1; i > index; --i) {
+      setBits(i, getBits(i - 1));
+    }
+    setBits(index, value);
+  }
+
   void push_back(const T &value) {
     if (size_ >= capacity_) {
       resizeCap(capacity_ == 0 ? 1 : capacity_ * 2);
@@ -455,6 +322,21 @@ public:
     setBits(size_, value);
     ++size_;
   }
+  void erase(size_t position) {
+    if (position >= size_) {
+      throw std::out_of_range("Index out of range");
+    }
+
+    for (size_t i = position; i < size_ - 1; ++i) {
+      setBits(i, getBits(i + 1));
+    }
+
+    resize(size_ - 1);
+  }
+
+  const std::unique_ptr<uint8_t[]> &getData() const {
+    return data_;
+  } // для теста на память
 };
 /*
 PackedVector — вектор, использующий для хранения одного элемента N заданных
