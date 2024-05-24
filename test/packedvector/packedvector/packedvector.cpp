@@ -95,7 +95,7 @@ TEST(PackedVectorTest, BitPacking) {
 }
 
 TEST(PackedVectorTest, CopyAssignment) {
-  PackedVector<uint32_t, 10> pv1 = {1023, 512, 256};
+  PackedVector<uint32_t, 10> pv1{1023, 512, 256};
   PackedVector<uint32_t, 10> pv2;
   pv2 = pv1;
 
@@ -106,7 +106,7 @@ TEST(PackedVectorTest, CopyAssignment) {
 }
 
 TEST(PackedVectorTest, MoveAssignment) {
-  PackedVector<uint32_t, 10> pv1 = {1023, 512, 256};
+  PackedVector<uint32_t, 10> pv1{1023, 512, 256};
   PackedVector<uint32_t, 10> pv2;
   pv2 = std::move(pv1);
 
@@ -185,34 +185,6 @@ TEST(PackedVectorTest, ShrinkToFit) {
   ASSERT_EQ(pv.capacity(), 3);
 }
 
-TEST(PackedVectorTest, Insert) {
-  PackedVector<int, 4> pv;
-  pv.push_back(1);
-  pv.push_back(2);
-  pv.push_back(3);
-
-  pv.insert(1, 4);
-
-  EXPECT_EQ(pv.size(), 4);
-  EXPECT_EQ(pv[0], 1);
-  EXPECT_EQ(pv[1], 4);
-  EXPECT_EQ(pv[2], 2);
-  EXPECT_EQ(pv[3], 3);
-}
-
-TEST(PackedVectorTest, EraseTest) {
-  PackedVector<int, 4> pv;
-  pv.push_back(1);
-  pv.push_back(2);
-  pv.push_back(3);
-
-  pv.erase(1); 
-
-  EXPECT_EQ(pv.size(), 2);
-  EXPECT_EQ(pv[0], 1);
-  EXPECT_EQ(pv[1], 3);
-}
-
 TEST(PackedVectorIteratorTest, Iterator) {
   PackedVector<uint32_t, 10> pv{1, 2, 3, 4, 5};
 
@@ -226,6 +198,7 @@ TEST(PackedVectorIteratorTest, Iterator) {
     ++expected;
   }
 }
+
 TEST(PackedVectorIteratorTest, ReverseIterator) {
   PackedVector<uint32_t, 10> pv{1, 2, 3, 4, 5};
 
@@ -240,23 +213,52 @@ TEST(PackedVectorIteratorTest, ReverseIterator) {
   }
 }
 
-// TEST(PackedVectorIteratorTest, ReverseIteratorBeginEnd) {
-//   PackedVector<int, 4> vec{1, 2, 3, 4, 5};
-//   PackedVector<int, 4>::ReverseIterator rit_begin = vec.rbegin();
-//   PackedVector<int, 4>::ReverseIterator rit_end = vec.rend();
+TEST(PackedVectorTest, Insert) {
+  PackedVector<int, 4> pv{1, 2, 3};
 
-//   EXPECT_EQ(*rit_begin, 5);
-//   EXPECT_EQ(*(--rit_end), 1);
-// }
+  pv.insert(1, 4);
 
-// TEST(PackedVectorIteratorTest, ConstReverseIteratorBeginEnd) {
-//   const PackedVector<int, 4> vec{1, 2, 3, 4, 5};
-//   PackedVector<int, 4>::ConstReverseIterator crit_begin = vec.crbegin();
-//   PackedVector<int, 4>::ConstReverseIterator crit_end = vec.crend();
+  EXPECT_EQ(pv.size(), 4);
+  EXPECT_EQ(pv[0], 1);
+  EXPECT_EQ(pv[1], 4);
+  EXPECT_EQ(pv[2], 2);
+  EXPECT_EQ(pv[3], 3);
+}
 
-//   EXPECT_EQ(*crit_begin, 5);
-//   EXPECT_EQ(*(--crit_end), 1);
-// }
+TEST(PackedVectorTest, InsertIterator) {
+  PackedVector<int, 4> pv{1, 2, 3};
+
+  auto it = pv.begin() + 1;
+  it = pv.insert(it, 4);
+
+  EXPECT_EQ(pv.size(), 4);
+  EXPECT_EQ(pv[0], 1);
+  EXPECT_EQ(pv[1], 4);
+  EXPECT_EQ(pv[2], 2);
+  EXPECT_EQ(pv[3], 3);
+  EXPECT_EQ(it, pv.begin() + 1);
+}
+
+TEST(PackedVectorTest, Erase) {
+  PackedVector<int, 4> pv{1, 2, 3};
+
+  pv.erase(1); 
+
+  EXPECT_EQ(pv.size(), 2);
+  EXPECT_EQ(pv[0], 1);
+  EXPECT_EQ(pv[1], 3);
+}
+TEST(PackedVectorTest, EraseIterator) {
+  PackedVector<int, 4> pv{1, 2, 3};
+
+  auto it = pv.begin() + 1;
+  it = pv.erase(it);
+
+  EXPECT_EQ(pv.size(), 2);
+  EXPECT_EQ(pv[0], 1);
+  EXPECT_EQ(pv[1], 3);
+  EXPECT_EQ(it, pv.begin() + 1);
+}
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

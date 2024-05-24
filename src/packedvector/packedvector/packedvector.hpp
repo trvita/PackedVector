@@ -287,11 +287,6 @@ public:
 
   // Методы для работы с итераторами
 
-  // Iterator erase(Iterator pos);
-  // Iterator erase(ConstIterator pos);
-  // Iterator erase(Iterator first, Iterator last);
-  // Iterator erase(ConstIterator first, ConstIterator last);
-
   Iterator begin() { return Iterator(*this, 0); }
   Iterator end() { return Iterator(*this, size_); }
   ReverseIterator rbegin() { return ReverseIterator(*this, size_ - 1); }
@@ -315,6 +310,17 @@ public:
     setBits(index, value);
   }
 
+  Iterator insert(Iterator pos, const T &value) {
+    size_t index = std::distance(begin(), pos);
+    resize(size_ + 1);
+    for (size_t i = size_ - 1; i > index; --i) {
+      setBits(i, getBits(i - 1));
+    }
+    setBits(index, value);
+
+    return Iterator(*this, index);
+  }
+
   void push_back(const T &value) {
     if (size_ >= capacity_) {
       resizeCap(capacity_ == 0 ? 1 : capacity_ * 2);
@@ -322,6 +328,7 @@ public:
     setBits(size_, value);
     ++size_;
   }
+
   void erase(size_t position) {
     if (position >= size_) {
       throw std::out_of_range("Index out of range");
@@ -332,6 +339,18 @@ public:
     }
 
     resize(size_ - 1);
+  }
+
+  Iterator erase(Iterator pos) {
+    if (pos == end()) {
+      throw std::out_of_range("Invalid iterator");
+    }
+    size_t index = std::distance(begin(), pos);
+    for (size_t i = index; i < size_ - 1; ++i) {
+      setBits(i, getBits(i + 1));
+    }
+    resize(size_ - 1);
+    return Iterator(*this, index);
   }
 
   const std::unique_ptr<uint8_t[]> &getData() const {
@@ -352,24 +371,14 @@ PackedVector — вектор, использующий для хранения 
 реализовать методы:
 
     operator[]
-
     at
-
     resize, reserve
-
     begin, end, rbegin, rend
-
     empty
-
     size, capactiy
-
     shrink_to_fit
-
     insert
-
     push_back
-
     erase
-
 */
 } // namespace packedvector
