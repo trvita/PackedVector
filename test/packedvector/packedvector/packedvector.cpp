@@ -242,7 +242,7 @@ TEST(PackedVectorTest, InsertIterator) {
 TEST(PackedVectorTest, Erase) {
   PackedVector<int, 4> pv{1, 2, 3};
 
-  pv.erase(1); 
+  pv.erase(1);
 
   EXPECT_EQ(pv.size(), 2);
   EXPECT_EQ(pv[0], 1);
