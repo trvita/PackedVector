@@ -19,11 +19,10 @@ Checks: >
   -readability-function-cognitive-complexity,
   -readability-const-return-type,
   -cert-err58-cpp
-WarningsAsErrors: true
+WarningsAsErrors: '*'
 HeaderFilterRegex: './src/packedvector/packedvector/packedvector.hpp'
 AnalyzeTemporaryDtors: false
-FormatStyle:     file
+FormatStyle: file
 CheckOptions:
-  - key:   cppcoreguidelines-explicit-virtual-functions.IgnoreDestructors
-    value: '1'
-...
+  - key: cppcoreguidelines-explicit-virtual-functions.IgnoreDestructors
+    value: "1"
