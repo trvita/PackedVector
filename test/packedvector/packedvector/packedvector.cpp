@@ -20,7 +20,8 @@ size_t memPackedVector(const PackedVector<T, N> &packedVec) {
 
 TEST(PackedVectorTest, StdVectorComparison) {
   const size_t numElements = 1000;
-  PackedVector<uint32_t, 10> packedVec; // потому что в 10 бит помещаются значения до 1024
+  PackedVector<uint32_t, 10>
+      packedVec; // потому что в 10 бит помещаются значения до 1024
   std::vector<uint32_t> Vec;
   for (size_t i = 0; i < numElements; ++i) {
     Vec.push_back(i);
@@ -290,8 +291,9 @@ TEST(PackedVectorTest, FindTest) {
   it = std::find(vec.begin(), vec.end(), 20);
   EXPECT_EQ(it, vec.end());
 }
+
 TEST(CopyTest, CopyVector) {
-  PackedVector<int, 4> source {1, 2, 3, 4, 5};
+  PackedVector<int, 4> source{1, 2, 3, 4, 5};
   std::vector<int> destination(source.size());
   std::copy(source.begin(), source.end(), destination.begin());
   EXPECT_EQ(destination, std::vector<int>({1, 2, 3, 4, 5}));
