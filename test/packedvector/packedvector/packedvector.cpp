@@ -1,9 +1,12 @@
+#include <algorithm>
 #include <cstdlib>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <malloc.h>
+#include <numeric>
 #include <packedvector.hpp>
 #include <vector>
+
 using namespace packedvector;
 
 template <typename T> size_t memVector(const std::vector<T> &vec) {
@@ -17,8 +20,7 @@ size_t memPackedVector(const PackedVector<T, N> &packedVec) {
 
 TEST(PackedVectorTest, StdVectorComparison) {
   const size_t numElements = 1000;
-  PackedVector<uint32_t, 10>
-      packedVec; // потому что в 10 бит помещаются значения до 1024
+  PackedVector<uint32_t, 10> packedVec; // потому что в 10 бит помещаются значения до 1024
   std::vector<uint32_t> Vec;
   for (size_t i = 0; i < numElements; ++i) {
     Vec.push_back(i);
@@ -258,6 +260,72 @@ TEST(PackedVectorTest, EraseIterator) {
   EXPECT_EQ(pv[0], 1);
   EXPECT_EQ(pv[1], 3);
   EXPECT_EQ(it, pv.begin() + 1);
+}
+
+TEST(PackedVectorTest, SwapTest) {
+  PackedVector<int, 4> vec1{1, 2, 3};
+  PackedVector<int, 4> vec2{5, 6, 7, 8};
+
+  swap(vec1, vec2);
+
+  EXPECT_EQ(vec1.size(), 4);
+  EXPECT_EQ(vec2.size(), 3);
+
+  EXPECT_EQ(vec1[0], 5);
+  EXPECT_EQ(vec1[1], 6);
+  EXPECT_EQ(vec1[2], 7);
+  EXPECT_EQ(vec1[3], 8);
+
+  EXPECT_EQ(vec2[0], 1);
+  EXPECT_EQ(vec2[1], 2);
+  EXPECT_EQ(vec2[2], 3);
+}
+
+TEST(PackedVectorTest, FindTest) {
+  PackedVector<int, 4> vec{1, 2, 3, 4, 5};
+  auto it = std::find(vec.begin(), vec.end(), 4);
+  EXPECT_NE(it, vec.end());
+  EXPECT_EQ(*it, 4);
+
+  it = std::find(vec.begin(), vec.end(), 20);
+  EXPECT_EQ(it, vec.end());
+}
+TEST(CopyTest, CopyVector) {
+  PackedVector<int, 4> source {1, 2, 3, 4, 5};
+  std::vector<int> destination(source.size());
+  std::copy(source.begin(), source.end(), destination.begin());
+  EXPECT_EQ(destination, std::vector<int>({1, 2, 3, 4, 5}));
+}
+
+TEST(ForEachTest, ForEachVector) {
+  PackedVector<int, 4> vec{1, 2, 3, 4, 5};
+  int sum = 0;
+  std::for_each(vec.begin(), vec.end(), [&sum](int x) { sum += x; });
+  EXPECT_EQ(sum, 15);
+}
+
+TEST(CountTest, CountVector) {
+  PackedVector<int, 4> vec{2, 3, 3, 1, 2, 2, 3, 3, 2, 3, 2, 1, 1};
+  int count = std::count(vec.begin(), vec.end(), 2);
+  EXPECT_EQ(count, 5);
+}
+
+TEST(MinElementTest, MinElementVector) {
+  PackedVector<int, 4> vec{5, 3, 8, 2, 9};
+  auto min_it = std::min_element(vec.begin(), vec.end());
+  EXPECT_EQ(*min_it, 2);
+}
+
+TEST(MaxElementTest, MaxElementVector) {
+  PackedVector<int, 4> vec{5, 3, 8, 2, 9};
+  auto max_it = std::max_element(vec.begin(), vec.end());
+  EXPECT_EQ(*max_it, 9);
+}
+
+TEST(BinarySearchTest, BinarySearchVector) {
+  PackedVector<int, 4> vec{1, 2, 3, 4, 5};
+  bool found = std::binary_search(vec.begin(), vec.end(), 3);
+  EXPECT_TRUE(found);
 }
 
 int main(int argc, char **argv) {
