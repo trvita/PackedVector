@@ -267,7 +267,7 @@ TEST(PackedVectorTest, SwapTest) {
   PackedVector<int, 4> vec1{1, 2, 3};
   PackedVector<int, 4> vec2{5, 6, 7, 8};
 
-  swap(vec1, vec2);
+  std::swap(vec1, vec2);
 
   EXPECT_EQ(vec1.size(), 4);
   EXPECT_EQ(vec2.size(), 3);

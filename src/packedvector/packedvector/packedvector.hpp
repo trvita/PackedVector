@@ -60,6 +60,7 @@ public:
   //  Конструктор по умолчанию
   PackedVector() = default;
 
+  // Конструктор по ёмкости
   PackedVector(size_t capacity) : size_(0), capacity_(capacity) {
     data_ = std::make_unique<uint8_t[]>(capacity);
     std::memset(data_.get(), 0, ((capacity * N) + 7) / 8);
@@ -361,27 +362,8 @@ public:
     return Iterator(*this, index);
   }
 
-  bool operator==(const PackedVector &other) const {
-    if (size_ != other.size_) {
-      return false;
-    }
-
-    for (size_t i = 0; i < size_; ++i) {
-      if (getBits(i) != other.getBits(i)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   const std::unique_ptr<uint8_t[]> &getData() const {
     return data_;
   } // для теста на память
-  friend void swap(PackedVector &first, PackedVector &second) noexcept {
-    std::swap(first.data_, second.data_);
-    std::swap(first.size_, second.size_);
-    std::swap(first.capacity_, second.capacity_);
-  }
 };
 } // namespace packedvector
