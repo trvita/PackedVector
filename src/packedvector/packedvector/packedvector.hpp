@@ -11,25 +11,24 @@ template <typename T, size_t N> class PackedVector {
   static_assert(N > 0 && N <= (sizeof(T) * 8),
                 "N must be within the bit-width of T");
 
-public:
-  size_t size_;
-  size_t capacity_;
-  static constexpr size_t bits = N;
-  std::unique_ptr<uint8_t[]> data_;
+private:
+  size_t size_ = 0;
+  size_t capacity_ = 0;
+  std::unique_ptr<uint8_t[]> data_ = std::make_unique<uint8_t[]>(0);
 
   T getBits(size_t index) const {
     T result = 0;
     std::uint8_t getBit = 0;
-    for (std::size_t bit = index * bits; bit < bits * (index + 1); bit++) {
+    for (size_t bit = index * N; bit < N * (index + 1); bit++) {
       getBit = (data_[bit / 8U] >> (7U - bit % 8U)) & 1U;
-      result |= getBit << (bit % bits);
+      result |= getBit << (bit % N);
     }
     return result;
   }
 
   void setBits(size_t index, T value) {
-    for (std::size_t bit = index * bits; bit < bits * (index + 1); bit++) {
-      std::uint8_t setBit = (value >> (bit % bits)) & 0x1;
+    for (size_t bit = index * N; bit < N * (index + 1); bit++) {
+      std::uint8_t setBit = (value >> (bit % N)) & 0x1;
       if (setBit != 0) {
         data_[bit / 8U] |= (1U << (7U - bit % 8U));
       } else {
@@ -39,13 +38,15 @@ public:
   }
 
   void resizeCap(size_t newCapacity) {
-    size_t newByteSize = ((newCapacity * bits) + 7) / 8;
+    size_t newByteSize = 0;
+    newByteSize = ((newCapacity * N) + 7) / 8;
     std::unique_ptr<uint8_t[]> newData =
         std::make_unique<uint8_t[]>(newByteSize);
     std::memset(newData.get(), 0, newByteSize);
 
     if (data_) {
-      size_t oldByteSize = ((capacity_ * bits) + 7) / 8;
+      size_t oldByteSize = 0;
+      oldByteSize = ((capacity_ * N) + 7) / 8;
       std::memcpy(newData.get(), data_.get(),
                   std::min(oldByteSize, newByteSize));
     }
@@ -54,27 +55,32 @@ public:
     capacity_ = newCapacity;
   }
 
-  // public:
+public:
   //  Коснтрукторы, деструктор, специальные методы------------------------
   //  Конструктор по умолчанию
-  PackedVector() : size_(0), capacity_(0) {}
+  PackedVector() = default;
+
+  // Конструктор по ёмкости
+  PackedVector(size_t capacity) : size_(0), capacity_(capacity) {
+    data_ = std::make_unique<uint8_t[]>(capacity);
+    std::memset(data_.get(), 0, ((capacity * N) + 7) / 8);
+  }
 
   // Конструктор по диапазону
-  template <typename It>
-  PackedVector(It begin, It end) : size_(0), capacity_(0) {
+  template <typename It> PackedVector(It begin, It end) {
     for (auto it = begin; it != end; ++it) {
       push_back(*it);
     }
   }
   // Конструктор по списку инициализации
-  PackedVector(std::initializer_list<T> list) : size_(0), capacity_(0) {
+  explicit PackedVector(std::initializer_list<T> list) {
     for (auto it = list.begin(); it != list.end(); ++it) {
       push_back(*it);
     }
   }
 
   // Копирующий конструктор
-  PackedVector(const PackedVector &other) : size_(0), capacity_(0) {
+  PackedVector(const PackedVector &other) {
     for (size_t i = 0; i < other.size(); ++i) {
       push_back(other[i]);
     }
@@ -90,7 +96,7 @@ public:
   }
 
   // Деструктор
-  ~PackedVector() = default;
+  ~PackedVector() { clear(); }
 
   // Копирующий оператор присваивания
   PackedVector &operator=(const PackedVector &other) {
@@ -161,7 +167,7 @@ public:
   void clear() {
     size_ = 0;
     if (data_) {
-      std::memset(data_.get(), 0, ((capacity_ * bits) + 7) / 8);
+      std::memset(data_.get(), 0, ((capacity_ * N) + 7) / 8);
     }
   }
 
@@ -176,12 +182,12 @@ public:
     using reference = T &;
 
   private:
-    PackedVector<T, N> *container;
-    size_t index;
+    PackedVector<T, N> *container = nullptr;
+    size_t index = 0;
 
   public:
-    explicit Iterator(PackedVector<T, N> &cont, size_t idx)
-        : container(&cont), index(idx) {}
+    explicit Iterator(PackedVector<T, N> &cont = nullptr, size_t index_ = 0)
+        : container(&cont), index(index_) {}
     value_type operator*() const { return (*container)[index]; }
 
     pointer operator->() const { return &((*container)[index]); }
@@ -191,7 +197,7 @@ public:
       return *this;
     }
 
-    Iterator operator++(int) {
+    const Iterator operator++(int) {
       Iterator temp = *this;
       ++(*this);
       return temp;
@@ -202,7 +208,7 @@ public:
       return *this;
     }
 
-    Iterator operator--(int) {
+    const Iterator operator--(int) {
       Iterator temp = *this;
       --(*this);
       return temp;
@@ -248,12 +254,13 @@ public:
     using reference = T &;
 
   private:
-    PackedVector<T, N> *container;
-    size_t index;
+    PackedVector<T, N> *container = nullptr;
+    size_t index = 0;
 
   public:
-    explicit ReverseIterator(PackedVector<T, N> &cont, size_t idx)
-        : container(&cont), index(idx) {}
+    explicit ReverseIterator(PackedVector<T, N> &cont = nullptr,
+                             size_t index_ = 0)
+        : container(&cont), index(index_) {}
     value_type operator*() const { return (*container)[index]; }
 
     pointer operator->() const { return &((*container)[index]); }
@@ -263,7 +270,7 @@ public:
       return *this;
     }
 
-    ReverseIterator operator++(int) {
+    const ReverseIterator operator++(int) {
       ReverseIterator temp = *this;
       --(*this);
       return temp;
@@ -311,7 +318,8 @@ public:
   }
 
   Iterator insert(Iterator pos, const T &value) {
-    size_t index = std::distance(begin(), pos);
+    size_t index = 0;
+    index = std::distance(begin(), pos);
     resize(size_ + 1);
     for (size_t i = size_ - 1; i > index; --i) {
       setBits(i, getBits(i - 1));
@@ -329,12 +337,12 @@ public:
     ++size_;
   }
 
-  void erase(size_t position) {
-    if (position >= size_) {
+  void erase(size_t pos) {
+    if (pos >= size_) {
       throw std::out_of_range("Index out of range");
     }
 
-    for (size_t i = position; i < size_ - 1; ++i) {
+    for (size_t i = pos; i < size_ - 1; ++i) {
       setBits(i, getBits(i + 1));
     }
 
@@ -345,7 +353,8 @@ public:
     if (pos == end()) {
       throw std::out_of_range("Invalid iterator");
     }
-    size_t index = std::distance(begin(), pos);
+    size_t index = 0;
+    index = std::distance(begin(), pos);
     for (size_t i = index; i < size_ - 1; ++i) {
       setBits(i, getBits(i + 1));
     }
@@ -357,28 +366,4 @@ public:
     return data_;
   } // для теста на память
 };
-/*
-PackedVector — вектор, использующий для хранения одного элемента N заданных
-бит.
-Для всех типов, управляющих ресурсами нужно реализовать пять специальных
-методов.
-Реализовать шаблон класса для структуры данных в соответствии со своим
-вариантом. Реализовать итераторы, совместимые с алгоритмами стандартной
-библиотеки. Покрыть тестами.
-
-Считаем, что вы полностью реализуете управление ресурсами, поэтому внутри
-классов не используйте контейнеры стандартной библиотеки.
-реализовать методы:
-
-    operator[]
-    at
-    resize, reserve
-    begin, end, rbegin, rend
-    empty
-    size, capactiy
-    shrink_to_fit
-    insert
-    push_back
-    erase
-*/
 } // namespace packedvector
